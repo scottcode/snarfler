@@ -35,10 +35,13 @@ make_error_msg = "{name}: expected '{exp}', got {got}\n".format
 
 
 class TestRender(unittest.TestCase):
+    def tearDown(self):
+        snarfler.stop_browser()
+
     def test_render_has_name(self):
         rendered_html = snarfler.rendered_html_from_url(test_url)
         self.assertIn(
-            'Stainless', str(rendered_html),
+            'Stainless', rendered_html,
             'Part name not found in rendered HTML'
         )
         # self.assertIn(
@@ -49,7 +52,7 @@ class TestRender(unittest.TestCase):
     def test_render_has_price(self):
         rendered_html = snarfler.rendered_html_from_url(test_url)
         self.assertIn(
-            price, str(rendered_html),
+            price, rendered_html,
             'Price not found in rendered HTML'
         )
 

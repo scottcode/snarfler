@@ -3,11 +3,50 @@ import requests
 from IPython.display import HTML, IFrame
 
 import sys
+import os
+from selenium import webdriver
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4.QtWebKit import *
 from PyQt4 import QtCore, QtGui, QtWebKit
 from lxml import html
+
+APP = None
+chrome_driver_path = '~/bin/chromedriver'
+browser = None
+
+
+def start_browser(driver_path=chrome_driver_path):
+    global browser
+    if browser is None:
+        browser = webdriver.Chrome(os.path.expanduser(driver_path))
+
+
+def stop_browser():
+    global browser
+    if browser is not None:
+        browser.quit()
+        browser = None
+
+
+def restart_browser(driver_path=chrome_driver_path):
+    stop_browser()
+    start_browser()
+
+
+def get_browser():
+    start_browser()
+    global browser
+    return browser
+
+
+def start_qt_app(*args):
+    global APP
+    if APP is not None:
+        # raise Exception("Qt App already started")
+        return True
+    APP = QtGui.QApplication(*args)
+    return True
 
 
 class WebPage(QtWebKit.QWebPage):
@@ -17,8 +56,11 @@ class WebPage(QtWebKit.QWebPage):
         self.mainFrame().loadFinished.connect(self.handleLoadFinished)
 
     def process(self, items):
+        start_qt_app()
         self._items = iter(items)
         self.fetchNext()
+        global APP
+        APP.exec_()
 
     def fetchNext(self):
         try:
@@ -53,9 +95,10 @@ class Render(QWebPage):
 # result = rendered.frame.toHtml()
 
 
-def rendered_html_from_url(url):
-    rendered = Render(url)
-    return rendered.frame.toHtml()
+def rendered_html_from_url(url, driver_path=chrome_driver_path):
+    browser = get_browser()
+    browser.get(url)
+    return browser.page_source
 
 
 def table_from_url(url):
